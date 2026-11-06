@@ -15,12 +15,13 @@ st.set_page_config(
 )
 
 st.title("🧠 Test de Personalidad Big Five")
+
 st.markdown("""
 Bienvenido a la aplicación Big Five.
 
-Contesta las 50 preguntas para conocer tus cinco
-rasgos de personalidad y descubrir a qué grupo
-perteneces mediante un modelo de aprendizaje
+Contesta las siguientes 5 preguntas para conocer tus
+cinco características de personalidad y descubrir a
+qué grupo perteneces mediante un modelo de aprendizaje
 no supervisado K-Means.
 """)
 
@@ -44,17 +45,13 @@ def cargar_recursos():
 
     columnas = ["op", "co", "ex", "ag", "ne"]
 
-    # Comprobar que existan las características necesarias
     if not all(col in df.columns for col in columnas):
-        raise ValueError("El dataset no contiene las columnas Big Five necesarias.")
+        raise ValueError("El dataset no contiene las columnas necesarias.")
 
-    # Eliminar registros incompletos
     df = df.dropna(subset=columnas).copy()
 
-    # Escalar datos
     datos_escalados = scaler.transform(df[columnas])
 
-    # Asignar clusters utilizando el modelo entrenado
     df["cluster"] = modelo.predict(datos_escalados)
 
     return modelo, scaler, df
@@ -72,80 +69,44 @@ except Exception as e:
 
 
 # ==========================================
-# 3. PREGUNTAS DEL TEST BIG FIVE
+# 3. TEST BIG FIVE: SOLAMENTE 5 PREGUNTAS
 # ==========================================
 
-# Formato:
-# (pregunta, característica, puntuación_inversa)
+st.header("📝 Cuestionario de personalidad")
 
-preguntas = [
+st.write("""
+Responde las siguientes preguntas seleccionando
+la opción que mejor represente tu personalidad.
+""")
 
-    # APERTURA (OP)
+preguntas = {
 
-    ("Tengo un vocabulario amplio.", "op", False),
-    ("Me cuesta comprender ideas abstractas.", "op", True),
-    ("Tengo una imaginación muy activa.", "op", False),
-    ("No me interesan las ideas abstractas.", "op", True),
-    ("Tengo buenas ideas.", "op", False),
-    ("No tengo una buena imaginación.", "op", True),
-    ("Comprendo rápidamente las cosas.", "op", False),
-    ("Utilizo palabras difíciles.", "op", False),
-    ("Me gusta reflexionar sobre las cosas.", "op", False),
-    ("Tengo muchas ideas.", "op", False),
+    "op": {
+        "nombre": "Apertura (OP)",
+        "pregunta": "¿Qué tanto te gusta aprender cosas nuevas y experimentar nuevas experiencias?"
+    },
 
-    # RESPONSABILIDAD (CO)
+    "co": {
+        "nombre": "Responsabilidad (CO)",
+        "pregunta": "¿Qué tan organizado y responsable eres al realizar tus actividades?"
+    },
 
-    ("Siempre estoy preparado para mis actividades.", "co", False),
-    ("Dejo mis pertenencias desordenadas.", "co", True),
-    ("Presto atención a los detalles.", "co", False),
-    ("Suelo hacer desorden.", "co", True),
-    ("Realizo mis tareas inmediatamente.", "co", False),
-    ("Olvido guardar las cosas en su lugar.", "co", True),
-    ("Me gusta mantener todo en orden.", "co", False),
-    ("Evito cumplir con mis responsabilidades.", "co", True),
-    ("Sigo un horario para realizar mis actividades.", "co", False),
-    ("Soy exigente con la calidad de mi trabajo.", "co", False),
+    "ex": {
+        "nombre": "Extroversión (EX)",
+        "pregunta": "¿Qué tanto disfrutas convivir y conversar con otras personas?"
+    },
 
-    # EXTROVERSIÓN (EX)
+    "ag": {
+        "nombre": "Amabilidad (AG)",
+        "pregunta": "¿Qué tanto te preocupas por ayudar y comprender a los demás?"
+    },
 
-    ("Soy el alma de las reuniones.", "ex", False),
-    ("No hablo demasiado.", "ex", True),
-    ("Me siento cómodo estando con otras personas.", "ex", False),
-    ("Prefiero mantenerme en segundo plano.", "ex", True),
-    ("Inicio conversaciones fácilmente.", "ex", False),
-    ("Tengo poco que decir.", "ex", True),
-    ("Hablo con muchas personas en las reuniones.", "ex", False),
-    ("No me gusta llamar la atención.", "ex", True),
-    ("No me importa ser el centro de atención.", "ex", False),
-    ("Soy reservado cuando estoy con desconocidos.", "ex", True),
+    "ne": {
+        "nombre": "Neuroticismo (NE)",
+        "pregunta": "¿Qué tan fácilmente te estresas o preocupas ante situaciones difíciles?"
+    }
 
-    # AMABILIDAD (AG)
-
-    ("Me preocupo poco por los demás.", "ag", True),
-    ("Me intereso por las personas.", "ag", False),
-    ("Insulto a las personas.", "ag", True),
-    ("Comprendo los sentimientos de los demás.", "ag", False),
-    ("No me interesan los problemas de otras personas.", "ag", True),
-    ("Tengo un corazón sensible.", "ag", False),
-    ("Dedico tiempo para ayudar a los demás.", "ag", False),
-    ("Soy indiferente ante las emociones de otros.", "ag", True),
-    ("Me preocupo por cómo se sienten los demás.", "ag", False),
-    ("Hago que las personas se sientan cómodas.", "ag", False),
-
-    # NEUROTICISMO (NE)
-
-    ("Generalmente estoy relajado.", "ne", True),
-    ("Me estreso fácilmente.", "ne", False),
-    ("Me preocupo por muchas cosas.", "ne", False),
-    ("Rara vez me siento triste.", "ne", True),
-    ("Me altero fácilmente.", "ne", False),
-    ("Me molesto con facilidad.", "ne", False),
-    ("Mi estado de ánimo cambia frecuentemente.", "ne", False),
-    ("Tengo cambios frecuentes de humor.", "ne", False),
-    ("Me irrito fácilmente.", "ne", False),
-    ("Frecuentemente me siento triste.", "ne", False)
-
-]
+}
 
 
 # ==========================================
@@ -153,36 +114,33 @@ preguntas = [
 # ==========================================
 
 opciones = {
-    "1 - Totalmente en desacuerdo": 1,
-    "2 - En desacuerdo": 2,
-    "3 - Ni de acuerdo ni en desacuerdo": 3,
-    "4 - De acuerdo": 4,
-    "5 - Totalmente de acuerdo": 5
+
+    "1 - Muy poco": 1,
+    "2 - Poco": 2,
+    "3 - Regular": 3,
+    "4 - Mucho": 4,
+    "5 - Demasiado": 5
+
 }
 
 
 # ==========================================
-# 5. FORMULARIO DE LAS 50 PREGUNTAS
+# 5. FORMULARIO DE LAS 5 PREGUNTAS
 # ==========================================
-
-st.header("📝 Cuestionario de personalidad")
-
-st.write("""
-Lee cada afirmación y selecciona la respuesta que
-mejor describa tu forma habitual de ser.
-""")
 
 respuestas = {}
 
 with st.form("formulario_bigfive"):
 
-    for i, (pregunta, rasgo, inversa) in enumerate(preguntas):
+    for clave, datos in preguntas.items():
 
-        respuestas[i] = st.radio(
-            f"{i + 1}. {pregunta}",
+        st.subheader(datos["nombre"])
+
+        respuestas[clave] = st.radio(
+            datos["pregunta"],
             options=list(opciones.keys()),
             index=None,
-            key=f"pregunta_{i}"
+            key=clave
         )
 
     enviar = st.form_submit_button(
@@ -192,50 +150,26 @@ with st.form("formulario_bigfive"):
 
 
 # ==========================================
-# 6. CALCULAR LOS CINCO RASGOS
+# 6. CALCULAR LOS CINCO RESULTADOS
 # ==========================================
 
 if enviar:
 
-    # Verificar que se contestaron las 50 preguntas
+    if any(valor is None for valor in respuestas.values()):
 
-    if any(respuesta is None for respuesta in respuestas.values()):
-
-        st.warning("Debes contestar las 50 preguntas antes de continuar.")
+        st.warning("Debes contestar las 5 preguntas.")
 
         st.stop()
 
-    resultados = {
-        "op": [],
-        "co": [],
-        "ex": [],
-        "ag": [],
-        "ne": []
-    }
-
-    # Calcular puntuaciones
-
-    for i, (pregunta, rasgo, inversa) in enumerate(preguntas):
-
-        valor = opciones[respuestas[i]]
-
-        # Invertir puntuación cuando corresponda
-        if inversa:
-            valor = 6 - valor
-
-        resultados[rasgo].append(valor)
-
-    # Promedio de cada rasgo convertido a escala 0-100
-    # para mantener la escala de entrada utilizada
-    # por la aplicación original.
-
     puntuaciones = {}
 
-    for rasgo in resultados:
+    for clave, respuesta in respuestas.items():
 
-        promedio = np.mean(resultados[rasgo])
+        valor = opciones[respuesta]
 
-        puntuaciones[rasgo] = ((promedio - 1) / 4) * 100
+        # Convertir de escala 1-5 a escala 0-100
+        puntuaciones[clave] = ((valor - 1) / 4) * 100
+
 
     # ======================================
     # 7. MOSTRAR RESULTADOS
@@ -250,11 +184,11 @@ if enviar:
     columnas = [col1, col2, col3, col4, col5]
 
     nombres = [
-        ("OP", "Apertura"),
-        ("CO", "Responsabilidad"),
-        ("EX", "Extroversión"),
-        ("AG", "Amabilidad"),
-        ("NE", "Neuroticismo")
+        ("op", "Apertura"),
+        ("co", "Responsabilidad"),
+        ("ex", "Extroversión"),
+        ("ag", "Amabilidad"),
+        ("ne", "Neuroticismo")
     ]
 
     for columna, (clave, nombre) in zip(columnas, nombres):
@@ -263,19 +197,22 @@ if enviar:
 
             st.metric(
                 nombre,
-                f"{puntuaciones[clave.lower()]:.1f}/100"
+                f"{puntuaciones[clave]:.1f}/100"
             )
+
 
     # ======================================
     # 8. ASIGNAR CLUSTER CON K-MEANS
     # ======================================
 
     mis_datos = pd.DataFrame([{
+
         "op": puntuaciones["op"],
         "co": puntuaciones["co"],
         "ex": puntuaciones["ex"],
         "ag": puntuaciones["ag"],
         "ne": puntuaciones["ne"]
+
     }])
 
     datos_escalados = scaler.transform(mis_datos)
@@ -285,8 +222,9 @@ if enviar:
     st.divider()
 
     st.success(
-        f"🎉 ¡Tu personalidad pertenece al Cluster {mi_cluster}!"
+        f"🎉 ¡Has sido asignado al Cluster {mi_cluster}!"
     )
+
 
     # ======================================
     # 9. CALCULAR PROMEDIOS DEL CLUSTER
@@ -306,24 +244,33 @@ if enviar:
 
     promedios = famosos_cluster[caracteristicas].mean()
 
+
     # ======================================
     # 10. DESCRIPCIÓN DEL CLUSTER
     # ======================================
 
     descripciones = {
+
         "op": "Creatividad y curiosidad: personas interesadas en aprender, explorar nuevas ideas y experimentar.",
+
         "co": "Organización y disciplina: personas responsables, ordenadas y comprometidas con sus objetivos.",
+
         "ex": "Sociabilidad y energía: personas comunicativas, expresivas y que disfrutan convivir con otros.",
+
         "ag": "Amabilidad y cooperación: personas empáticas, comprensivas y dispuestas a colaborar.",
+
         "ne": "Sensibilidad emocional: personas que pueden experimentar emociones intensas y mayor preocupación ante situaciones difíciles."
+
     }
 
     nombres_rasgos = {
+
         "op": "Apertura",
         "co": "Responsabilidad",
         "ex": "Extroversión",
         "ag": "Amabilidad",
         "ne": "Neuroticismo"
+
     }
 
     rasgos_ordenados = promedios.sort_values(ascending=False)
@@ -346,10 +293,11 @@ if enviar:
     )
 
     st.info("""
-    La descripción se genera utilizando los promedios
-    de los cinco rasgos de las personas pertenecientes
-    al cluster asignado por K-means.
+    Esta descripción se genera utilizando los promedios
+    de las cinco características de las personas
+    pertenecientes al cluster asignado por K-means.
     """)
+
 
     # ======================================
     # 11. GRÁFICA DE BARRAS
@@ -367,10 +315,7 @@ if enviar:
         nombres_rasgos[c] for c in caracteristicas
     ]
 
-    barras = ax1.bar(
-        etiquetas,
-        valores
-    )
+    barras = ax1.bar(etiquetas, valores)
 
     ax1.set_title(
         f"Promedio de personalidad - Cluster {mi_cluster}"
@@ -392,6 +337,7 @@ if enviar:
 
     st.pyplot(fig1)
 
+
     # ======================================
     # 12. TOP 5 FAMOSOS RELACIONADOS
     # ======================================
@@ -399,10 +345,6 @@ if enviar:
     st.divider()
 
     st.header("🌟 Top 5 famosos relacionados con tu perfil")
-
-    # Referencias ilustrativas según el rasgo predominante.
-    # No representan evaluaciones psicológicas reales
-    # de estas personas.
 
     famosos = {
 
@@ -455,11 +397,11 @@ if enviar:
         st.write(f"**{i}. {famoso}**")
 
     st.caption("""
-    Estas personalidades son ejemplos ilustrativos
-    asociados con el rasgo predominante. No se afirma
-    que hayan realizado el test ni que pertenezcan
-    científicamente al mismo cluster.
+    Personalidades ilustrativas relacionadas con el rasgo
+    predominante. No se afirma que hayan realizado el test
+    ni que pertenezcan científicamente al mismo cluster.
     """)
+
 
     # ======================================
     # 13. GRÁFICA DE RADAR
@@ -472,16 +414,16 @@ if enviar:
     categorias = ["OP", "CO", "EX", "AG", "NE"]
 
     valores_usuario = [
+
         puntuaciones["op"],
         puntuaciones["co"],
         puntuaciones["ex"],
         puntuaciones["ag"],
         puntuaciones["ne"]
+
     ]
 
-    valores_cluster = promedios.values.tolist()
-
-    # Cerrar los polígonos
+    valores_cluster = promedios[caracteristicas].values.tolist()
 
     valores_usuario += valores_usuario[:1]
 
@@ -542,6 +484,7 @@ if enviar:
 
     st.pyplot(fig2)
 
+
     # ======================================
     # 14. CONCLUSIÓN
     # ======================================
@@ -551,25 +494,26 @@ if enviar:
     st.header("📌 Conclusión")
 
     st.write(f"""
-    De acuerdo con las respuestas proporcionadas en el
-    test de personalidad Big Five, tus cinco características
-    fueron procesadas y utilizadas como entrada para el
-    modelo de aprendizaje no supervisado K-means.
+    De acuerdo con las respuestas proporcionadas en
+    el test Big Five, se calcularon cinco características
+    de personalidad: Apertura, Responsabilidad,
+    Extroversión, Amabilidad y Neuroticismo.
+
+    Los resultados fueron procesados mediante el modelo
+    de aprendizaje no supervisado K-means.
 
     El modelo te asignó al Cluster {mi_cluster}.
 
     La característica predominante de este grupo es
     {nombres_rasgos[rasgo_principal]}.
 
-    Mediante las gráficas de barras y radar puedes
-    observar las características que predominan en tu
-    grupo y comparar tu perfil personal con el promedio
-    de los integrantes del cluster.
+    Las gráficas permiten observar las características
+    predominantes del cluster y comparar tu perfil
+    personal con el promedio de sus integrantes.
 
-    Esto permite comprender cómo el aprendizaje no
-    supervisado identifica grupos de datos con
-    características similares sin utilizar categorías
-    previamente etiquetadas.
+    Esto demuestra cómo el aprendizaje no supervisado
+    permite agrupar datos según sus características
+    sin utilizar categorías previamente etiquetadas.
     """)
 
     st.success("¡Gracias por completar el test Big Five!")
